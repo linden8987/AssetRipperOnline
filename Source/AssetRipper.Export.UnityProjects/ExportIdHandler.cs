@@ -1,4 +1,4 @@
-﻿using AssetRipper.Assets;
+using AssetRipper.Assets;
 using System.Diagnostics;
 using System.IO.Hashing;
 
@@ -60,7 +60,14 @@ public static class ExportIdHandler
 			return classID;
 		}
 
-		Debug.Assert(value < TenToTheFifth, $"Value {value} for main export ID must have no more than 5 digits");
+		// Production guard preventing structural ID corruption
+		// The export ID calculation uses classID * TenToTheFifth + value.
+		// Values >= TenToTheFifth (100,000) would overflow into the classID prefix space.
+		if (value >= TenToTheFifth)
+		{
+			throw new ArgumentOutOfRangeException(nameof(value), value, $"Value must be less than {TenToTheFifth}");
+		}
+		
 		return classID * TenToTheFifth + value;
 	}
 
