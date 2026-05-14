@@ -1,4 +1,4 @@
-name: Web App Build and Deploy
+name: .NET Web Application Build
 
 on:
   push:
@@ -6,65 +6,31 @@ on:
   pull_request:
     branches: [ main, master ]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  audit-and-test:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          dotnet-version: '8.0.x' # Change to '9.0.x' if you are using .NET 9
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore dependencies
+        run: dotnet restore
 
-      - name: Run security audit
-        run: npm audit --audit-level=high
+      - name: Build web application
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Run linter
-        run: npm run lint --if-present
+      - name: Run automated tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
 
-      - name: Execute unit tests
-        run: npm run test --if-present
-
-  build-and-deploy:
-    needs: audit-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Compile production assets
-        run: npm run build
-
-      - name: Upload static website artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist' # Change to './build' or './_site' depending on your framework
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish production binaries
+        run: dotnet publish --configuration Release -o ./publish
