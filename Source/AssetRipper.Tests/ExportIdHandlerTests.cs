@@ -21,14 +21,14 @@ public class ExportIdHandlerTests
 	}
 
 	[Test]
-	public void GetMainExportID_ValueGreaterThan100000_DebugAssertFails()
+	public void GetMainExportID_ValueGreaterThan100000_ThrowsArgumentOutOfRangeException()
 	{
 		// Arrange
 		const int classID = 0;
 		const uint value = 100001u;
 
 		// Act & Assert
-		Assert.That(() => ExportIdHandler.GetMainExportID(MockObject.Create(classID), value), Throws.Exception);
+		Assert.That(() => ExportIdHandler.GetMainExportID(MockObject.Create(classID), value), Throws.TypeOf<ArgumentOutOfRangeException>());
 	}
 
 	[Test]
